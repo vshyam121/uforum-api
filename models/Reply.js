@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const ReplySchema = new mongoose.Schema({
+  forum: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Forum',
+  },
   content: {
     type: String,
     required: true,
