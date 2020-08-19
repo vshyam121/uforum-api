@@ -49,23 +49,25 @@ exports.patchThread = asyncHandler(async (req, res, next) => {
   res.status(200).send({ success: true, thread: thread });
 });
 
-//@desc Get a thread
+//@desc Get threads
 //@route GET /api/threads
 //@access Private
 exports.getThreads = asyncHandler(async (req, res, next) => {
   const threads = await Thread.find(req.query).populate('user');
-  if (!threads) {
-    return next(new ErrorResponse('Unable to find thread for slug', 400));
-  }
+
   res.status(200).send({ success: true, threads: threads });
 });
 
 exports.deleteThread = asyncHandler(async (req, res, next) => {
-  const threadsDeleted = await Thread.deleteOne({ _id: req.params.threadId });
+  const thread = await Thread.findById({ _id: req.params.threadId });
 
-  if (threadsDeleted.deleteCount === 0) {
-    return next(new ErrorResponse('Unable to delete thread', 400));
+  if (!thread) {
+    return next(new ErrorResponse('Unable to find thread', 400));
   }
+
+  await Reply.deleteMany({ _id: { $in: thread.replies } });
+
+  await Thread.deleteOne({ _id: req.params.threadId });
 
   res.status(200).send({ success: true });
 });
@@ -74,8 +76,8 @@ exports.deleteThread = asyncHandler(async (req, res, next) => {
 //@route POST /api/threads/:threadId/replies
 //@access Private
 exports.createReplyForThread = asyncHandler(async (req, res, next) => {
-  const { content, user } = req.body;
-  let newReply = await Reply.create({ content, user });
+  const { content, user, forum } = req.body;
+  let newReply = await Reply.create({ content, user, forum });
 
   newReply = await newReply.populate('user').execPopulate();
 
@@ -115,17 +117,13 @@ exports.deleteReplyForThread = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Unable to delete thread', 400));
   }
 
-  const thread = await Thread.findByIdAndUpdate(
+  await Thread.findByIdAndUpdate(
     { _id: req.params.threadId },
     { $pull: { replies: req.params.replyId } },
     { new: true, runValidators: true }
   );
 
-  const replies = await Reply.find({ _id: { $in: thread.replies } })
-    .populate('user')
-    .sort({ _id: -1 });
-
-  res.status(200).send({ success: true, replies: replies });
+  res.status(200).send({ success: true });
 });
 
 //@desc Add user to favorites for a thread
@@ -151,7 +149,7 @@ exports.deleteFromFavorites = asyncHandler(async (req, res, next) => {
     { new: true, runValidators: true }
   );
 
-  res.status(201).send({ success: true, favorites: thread.favorites });
+  res.status(200).send({ success: true, favorites: thread.favorites });
 });
 
 //@desc Get a thread
