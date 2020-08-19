@@ -1,7 +1,10 @@
 const asyncHandler = require('../middleware/async');
 const Forum = require('../models/Forum');
 const Thread = require('../models/Thread');
+const Reply = require('../models/reply');
 const mongoose = require('mongoose');
+const ErrorResponse = require('../utils/ErrorResponse');
+const slugify = require('slugify');
 
 //@desc Create a new forum
 //@route POST /api/forums
@@ -9,11 +12,15 @@ const mongoose = require('mongoose');
 exports.createForum = asyncHandler(async (req, res, next) => {
   const { name } = req.body;
 
-  //Create forum
-  const newForum = await Forum.create({ name });
+  const slug = slugify(name, { lower: true });
 
-  //Send back new forum
-  res.status(201).send({ success: true, forum: newForum });
+  //Create forum
+  await Forum.create({ name, slug });
+
+  const allForums = await Forum.find();
+
+  //Send back all forums including new one
+  res.status(201).send({ success: true, forums: allForums });
 });
 
 //@desc Get all forums
@@ -25,12 +32,28 @@ exports.getAllForums = asyncHandler(async (req, res, next) => {
   res.status(200).send({ success: true, forums: allForums });
 });
 
+//@desc Delete a forum and related resources
+//@route DELETE /api/forums/:forumId
+//@access Private
+exports.deleteForum = asyncHandler(async (req, res, next) => {
+  const forum = await Forum.deleteOne({ _id: req.params.forumId });
+
+  if (forum.deletedCount === 0) {
+    return next(new ErrorResponse('Unable to delete forum', 400));
+  }
+
+  await Thread.deleteMany({ forum: req.params.forumId });
+
+  await Reply.deleteMany({ forum: req.params.forumId });
+
+  res.status(200).send({ success: true });
+});
+
 //@desc Get all threads for a forum
 //@route GET /api/forums/:forumId/threads
 //@access Public
 exports.getThreadsForForum = asyncHandler(async (req, res, next) => {
-  const reqQuery = { ...req.query };
-  delete reqQuery['sorting_method'];
+  delete req.query['sorting_method'];
 
   let query;
 
@@ -39,7 +62,7 @@ exports.getThreadsForForum = asyncHandler(async (req, res, next) => {
       {
         $match: {
           forum: mongoose.Types.ObjectId(req.params.forumId),
-          ...reqQuery,
+          ...req.query,
         },
       },
       {
@@ -74,6 +97,7 @@ exports.getThreadsForForum = asyncHandler(async (req, res, next) => {
           favorites: 1,
           replies: 1,
           createdAt: 1,
+          pinned: 1,
           forum: { $arrayElemAt: ['$forum', 0] },
           user: { $arrayElemAt: ['$user', 0] },
         },
@@ -82,7 +106,7 @@ exports.getThreadsForForum = asyncHandler(async (req, res, next) => {
   } else {
     query = Thread.find({
       forum: req.params.forumId,
-      ...reqQuery,
+      ...req.query,
     })
       .populate('user')
       .populate('forum')
@@ -90,8 +114,6 @@ exports.getThreadsForForum = asyncHandler(async (req, res, next) => {
   }
 
   const threads = await query;
-
-  console.log(threads);
 
   res.status(200).send({ success: true, threads: threads });
 });
