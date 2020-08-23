@@ -1,7 +1,7 @@
 const asyncHandler = require('../middleware/async');
 
 const Thread = require('../models/Thread');
-const Reply = require('../models/reply');
+const Reply = require('../models/Reply');
 
 const { v4 } = require('uuid');
 const ErrorResponse = require('../utils/ErrorResponse');
