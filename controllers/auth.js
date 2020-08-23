@@ -94,7 +94,6 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: expires,
     httpOnly: true,
     sameSite: 'none',
-    //secure: true,
   };
 
   if (process.env.NODE_ENV === 'production') {
