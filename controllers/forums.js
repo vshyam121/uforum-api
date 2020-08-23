@@ -53,11 +53,14 @@ exports.deleteForum = asyncHandler(async (req, res, next) => {
 //@route GET /api/forums/:forumId/threads
 //@access Public
 exports.getThreadsForForum = asyncHandler(async (req, res, next) => {
+  const popularity = req.query.sorting_method === 'popularity';
+
   delete req.query['sorting_method'];
+  req.query.pinned = req.query.pinned === 'true';
 
   let query;
 
-  if (req.query.sorting_method === 'popularity') {
+  if (popularity) {
     query = Thread.aggregate([
       {
         $match: {
