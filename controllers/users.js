@@ -11,6 +11,7 @@ exports.getUserThreads = asyncHandler(async (req, res, next) => {
 
   const threads = await Thread.find({ user: user._id })
     .populate('forum')
+    .populate('user')
     .sort({ createdAt: -1 });
 
   res.status(200).send({ success: true, threads: threads });
