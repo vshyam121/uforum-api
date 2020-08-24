@@ -78,8 +78,11 @@ exports.signIn = asyncHandler(async (req, res, next) => {
 exports.signOut = asyncHandler(async (req, res, next) => {
   const options = {
     sameSite: 'none',
-    secure: true,
   };
+
+  if (process.env.NODE_ENV === 'production') {
+    options.secure = true;
+  }
 
   //Delete cookie that has token
   res.clearCookie('token', options).status(200).json({ success: true });
@@ -99,14 +102,11 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: expires,
     httpOnly: true,
     sameSite: 'none',
-    secure: true,
   };
 
   if (process.env.NODE_ENV === 'production') {
     options.secure = true;
   }
-
-  console.log(token);
 
   //Send back http only cookie, user info and expiration time
   res
