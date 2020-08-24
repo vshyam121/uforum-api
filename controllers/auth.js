@@ -4,7 +4,7 @@ const asyncHandler = require('../middleware/async');
 const jwt = require('jsonwebtoken');
 
 //@desc     Register user
-//@route    POST /auth/register
+//@route    POST /auth/signup
 //@access   Public
 exports.signUp = asyncHandler(async (req, res, next) => {
   const { firstName, lastName, username, email, password } = req.body;
@@ -23,7 +23,7 @@ exports.signUp = asyncHandler(async (req, res, next) => {
 });
 
 //@desc     Login user
-//@route    POST /auth/login
+//@route    POST /auth/signin
 //@access   Public
 exports.signIn = asyncHandler(async (req, res, next) => {
   const { username, password } = req.body;
@@ -73,11 +73,16 @@ exports.signIn = asyncHandler(async (req, res, next) => {
 });
 
 //@desc     Login user
-//@route    POST /auth/logout
+//@route    POST /auth/signout
 //@access   Private
 exports.signOut = asyncHandler(async (req, res, next) => {
+  const options = {
+    sameSite: 'none',
+    secure: true,
+  };
+
   //Delete cookie that has token
-  res.clearCookie('token').status(200).json({ success: true });
+  res.clearCookie('token', options).status(200).json({ success: true });
 });
 
 //Create token, put it in cookie and send response
@@ -94,11 +99,14 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: expires,
     httpOnly: true,
     sameSite: 'none',
+    secure: true,
   };
 
   if (process.env.NODE_ENV === 'production') {
     options.secure = true;
   }
+
+  console.log(token);
 
   //Send back http only cookie, user info and expiration time
   res
