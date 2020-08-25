@@ -28,23 +28,8 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: process.env.FRONTEND_DOMAIN,
-    credentials: true,
   })
 );
-
-app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_DOMAIN);
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, OPTIONS, PUT, PATCH, DELETE'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept'
-  );
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  next();
-});
 
 //Dev logging middleware
 if (process.env.NODE_ENV === 'development') {

@@ -72,22 +72,6 @@ exports.signIn = asyncHandler(async (req, res, next) => {
   sendTokenResponse(user, 200, res);
 });
 
-//@desc     Login user
-//@route    POST /auth/signout
-//@access   Private
-exports.signOut = asyncHandler(async (req, res, next) => {
-  const options = {
-    sameSite: 'none',
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
-  }
-
-  //Delete cookie that has token
-  res.clearCookie('token', options).status(200).json({ success: true });
-});
-
 //Create token, put it in cookie and send response
 const sendTokenResponse = (user, statusCode, res) => {
   //Create token
@@ -98,28 +82,20 @@ const sendTokenResponse = (user, statusCode, res) => {
     Date.now() + process.env.COOKIE_EXPIRES_IN * 60 * 60 * 1000
   );
 
-  const options = {
-    expires: expires,
-    httpOnly: true,
-    sameSite: 'none',
-  };
-
-  if (process.env.NODE_ENV === 'production') {
-    options.secure = true;
-  }
-
-  //Send back http only cookie, user info and expiration time
-  res
-    .status(statusCode)
-    .cookie('token', token, options)
-    .json({ success: true, user: user, expires: expires.getTime() });
+  //Send back token, user info and expiration time
+  res.status(statusCode).json({
+    success: true,
+    token: token,
+    user: user,
+    expires: expires.getTime(),
+  });
 };
 
 //@desc     Get currently logged in user
 //@route    Get /auth/me
 //@access   Private
 exports.getMe = asyncHandler(async (req, res, next) => {
-  const decoded = jwt.verify(req.cookies.token, process.env.JWT_SECRET);
+  const decoded = jwt.verify(req.token, process.env.JWT_SECRET);
 
   //Send back user and expiration time associated with verified token in cookie
   res

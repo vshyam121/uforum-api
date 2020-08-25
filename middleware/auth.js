@@ -6,19 +6,20 @@ const jwt = require('jsonwebtoken');
 //@desc  Check if request has a cookie with a valid token, then attach user object to request
 exports.protect = asyncHandler(async (req, res, next) => {
   //Check cookie for token
-  let token;
-  if (req.cookies.token) {
-    token = req.cookies.token;
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const bearer = authHeader.split(' ');
+    req.token = bearer[1];
   }
 
   //Make sure token is in header
-  if (!token) {
+  if (!req.token) {
     return next(new ErrorResponse('Not authorized to access this route', 401));
   }
 
   try {
     //Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(req.token, process.env.JWT_SECRET);
 
     //Token expired, not authorized access
     if (Date.now() / 1000 > decoded.exp) {
@@ -41,18 +42,20 @@ exports.protect = asyncHandler(async (req, res, next) => {
 exports.adminProtect = asyncHandler(async (req, res, next) => {
   //Check cookie for token
   let token;
-  if (req.cookies.token) {
-    token = req.cookies.token;
+  const authHeader = req.headers['Authorization'];
+  if (authHeader) {
+    const bearer = authHeader.split(' ');
+    req.token = bearer[1];
   }
 
   //Make sure token is in header
-  if (!token) {
+  if (!req.token) {
     return next(new ErrorResponse('Not authorized to access this route', 401));
   }
 
   try {
     //Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(req.token, process.env.JWT_SECRET);
 
     //Token expired, not authorized access
     if (Date.now() / 1000 > decoded.exp) {
