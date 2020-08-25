@@ -3,9 +3,9 @@ const ErrorResponse = require('../utils/ErrorResponse');
 const asyncHandler = require('../middleware/async');
 const jwt = require('jsonwebtoken');
 
-//@desc  Check if request has a cookie with a valid token, then attach user object to request
+//@desc  Check if request has bearer token, then attach user object to request
 exports.protect = asyncHandler(async (req, res, next) => {
-  //Check cookie for token
+  //Check headers for bearer token
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const bearer = authHeader.split(' ');
@@ -37,11 +37,10 @@ exports.protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-//@desc  Check if request has a cookie with a valid token, then attach user object to request
+//@desc  Check if request has bearer token, then attach user object to request
 //      if user is admin
 exports.adminProtect = asyncHandler(async (req, res, next) => {
-  //Check cookie for token
-  let token;
+  //Check headers for bearer token
   const authHeader = req.headers['Authorization'];
   if (authHeader) {
     const bearer = authHeader.split(' ');
